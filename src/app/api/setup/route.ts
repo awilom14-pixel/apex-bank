@@ -21,8 +21,8 @@ export async function GET() {
           "email" TEXT NOT NULL UNIQUE,
           "password" TEXT NOT NULL,
           "avatar" TEXT,
-          "balance" REAL NOT NULL DEFAULT 5000,
-          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          "balance" DOUBLE PRECISION NOT NULL DEFAULT 5000,
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
 
@@ -31,11 +31,11 @@ export async function GET() {
           "id" TEXT NOT NULL PRIMARY KEY,
           "senderId" TEXT NOT NULL,
           "receiverId" TEXT NOT NULL,
-          "amount" REAL NOT NULL,
+          "amount" DOUBLE PRECISION NOT NULL,
           "note" TEXT,
           "status" TEXT NOT NULL DEFAULT 'completed',
           "type" TEXT NOT NULL DEFAULT 'transfer',
-          "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY ("senderId") REFERENCES "User"("id"),
           FOREIGN KEY ("receiverId") REFERENCES "User"("id")
         )
