@@ -29,9 +29,30 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userCount = await prisma.user.count();
     const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword, balance: 5000 },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        balance: 5000,
+        isAdmin: userCount === 0,
+      },
     });
+
+    // Create admin notification
+    try {
+      await prisma.notification.create({
+        data: {
+          type: "signup",
+          title: "New User Registered",
+          message: `${name} (${email}) just created an account with $5,000 starting balance.`,
+          userId: user.id,
+        },
+      });
+    } catch (e) {
+      // Notification table may not exist yet — non-critical
+    }
 
     const { password: _, ...userWithoutPassword } = user;
     return NextResponse.json({ user: userWithoutPassword }, { status: 201 });

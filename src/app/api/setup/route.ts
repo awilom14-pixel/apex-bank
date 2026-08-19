@@ -3,16 +3,13 @@ import { prisma } from "@/lib/db";
 
 export async function GET() {
   try {
-    // Push schema to create tables
     const { execSync } = require("child_process");
     execSync("npx prisma db push --skip-generate", {
       cwd: process.cwd(),
       timeout: 30000,
     });
-
     return NextResponse.json({ success: true, message: "Database initialized" });
   } catch (error: any) {
-    // If prisma push fails (e.g. in serverless), try raw SQL
     try {
       await prisma.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS "User" (
@@ -22,6 +19,7 @@ export async function GET() {
           "password" TEXT NOT NULL,
           "avatar" TEXT,
           "balance" DOUBLE PRECISION NOT NULL DEFAULT 5000,
+          "isAdmin" BOOLEAN NOT NULL DEFAULT false,
           "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -38,6 +36,18 @@ export async function GET() {
           "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY ("senderId") REFERENCES "User"("id"),
           FOREIGN KEY ("receiverId") REFERENCES "User"("id")
+        )
+      `);
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Notification" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "type" TEXT NOT NULL,
+          "title" TEXT NOT NULL,
+          "message" TEXT NOT NULL,
+          "userId" TEXT,
+          "read" BOOLEAN NOT NULL DEFAULT false,
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
 

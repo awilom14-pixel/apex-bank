@@ -10,17 +10,18 @@ import {
   ArrowDownLeft,
   Send,
   Receipt,
+  UserPlus,
+  Bell,
+  Check,
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
 import { formatCurrency, timeAgo } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -53,6 +54,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,6 +73,13 @@ export default function DashboardPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    if (userData.isAdmin) {
+      fetch("/api/notifications")
+        .then((res) => res.json())
+        .then((data) => setNotifications(data.notifications || []))
+        .catch(() => {});
+    }
   }, [router]);
 
   if (!user) return null;
@@ -93,8 +102,75 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold">
           Welcome, <span className="gradient-text">{user.name}</span>
         </h1>
-        <p className="text-muted-foreground">Here&apos;s your financial overview</p>
+        <p className="text-muted-foreground">
+          {user.isAdmin ? "Admin Dashboard — You're the boss!" : "Here's your financial overview"}
+        </p>
       </motion.div>
+
+      {/* Admin Notifications Panel */}
+      {user.isAdmin && notifications.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="glass card-glow rounded-2xl p-6"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
+                <Bell className="h-4 w-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold">Admin Notifications</h2>
+            </div>
+            <button
+              onClick={async () => {
+                await fetch("/api/notifications", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ action: "markAllRead" }),
+                });
+                setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+              }}
+              className="flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <Check className="h-3.5 w-3.5" />
+              Mark all read
+            </button>
+          </div>
+          <div className="space-y-2">
+            {notifications.slice(0, 5).map((n) => (
+              <div
+                key={n.id}
+                className={`flex items-start gap-3 rounded-xl border border-border/50 px-4 py-3 transition-colors hover:bg-secondary/30 ${
+                  !n.read ? "border-l-2 border-l-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+                  {n.type === "signup" ? (
+                    <UserPlus className="h-4 w-4 text-violet-400" />
+                  ) : (
+                    <Bell className="h-4 w-4 text-blue-400" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{n.title}</p>
+                    {!n.read && (
+                      <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                        NEW
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{n.message}</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground/60">
+                    {timeAgo(n.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -239,7 +315,6 @@ export default function DashboardPage() {
           transition={{ delay: 0.4 }}
           className="space-y-6"
         >
-          {/* Quick Actions */}
           <div className="glass card-glow rounded-2xl p-6">
             <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -256,7 +331,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Spending Breakdown */}
           <div className="glass card-glow rounded-2xl p-6">
             <h2 className="mb-4 text-lg font-semibold">Spending Breakdown</h2>
             <div className="space-y-3">
