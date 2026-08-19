@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -52,9 +53,10 @@ export default function SettingsPage() {
       localStorage.setItem("apex-user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       setSaved(true);
+      toast.success("Profile updated!");
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      // ignore
+      toast.error("Failed to save changes");
     }
     setSaving(false);
   };

@@ -12,6 +12,7 @@ import {
   Shield,
   X,
 } from "lucide-react";
+import { logout } from "@/lib/client-auth";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -45,9 +46,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("apex-user");
-    router.push("/login");
-    onClose();
+    logout();
   };
 
   const sidebarContent = (

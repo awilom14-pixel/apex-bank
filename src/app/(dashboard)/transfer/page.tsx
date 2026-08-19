@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function TransferPage() {
   const router = useRouter();
@@ -68,6 +69,7 @@ export default function TransferPage() {
 
       if (!res.ok) {
         setError(data.error);
+        toast.error(data.error);
         setLoading(false);
         return;
       }
@@ -77,10 +79,12 @@ export default function TransferPage() {
       localStorage.setItem("apex-user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       setSuccessMsg(data.message);
+      toast.success(data.message);
       setStep("success");
       setLoading(false);
     } catch {
       setError("Transfer failed");
+      toast.error("Transfer failed");
       setLoading(false);
     }
   };

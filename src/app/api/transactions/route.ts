@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 400 }
-      );
-    }
-
     const transactions = await prisma.transaction.findMany({
       where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
+        OR: [{ senderId: session.userId }, { receiverId: session.userId }],
       },
       include: {
         sender: { select: { id: true, name: true, email: true, avatar: true } },

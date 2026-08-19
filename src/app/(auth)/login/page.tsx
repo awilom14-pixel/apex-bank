@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("apex-user", JSON.stringify(data.user));
+      toast.success(`Welcome back, ${data.user.name}!`);
       router.push("/dashboard");
     } catch {
       setError("Something went wrong");
@@ -44,7 +45,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
-      {/* Background gradient orbs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-gradient-start/20 blur-[128px]" />
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-gradient-end/20 blur-[128px]" />
@@ -56,7 +56,6 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md"
       >
-        {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gradient-start to-gradient-end">
             <span className="text-2xl font-bold text-white">A</span>
@@ -67,7 +66,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="glass card-glow rounded-3xl p-8">
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
@@ -112,11 +110,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
@@ -145,10 +139,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:underline"
-            >
+            <Link href="/register" className="font-medium text-primary hover:underline">
               Create one
             </Link>
           </p>

@@ -26,29 +26,65 @@ import {
 import { formatCurrency, timeAgo } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-const monthlyData = [
-  { month: "Jan", income: 4200, expenses: 2800 },
-  { month: "Feb", income: 3800, expenses: 3100 },
-  { month: "Mar", income: 5100, expenses: 2600 },
-  { month: "Apr", income: 4500, expenses: 3400 },
-  { month: "May", income: 5800, expenses: 2900 },
-  { month: "Jun", income: 6200, expenses: 3200 },
-  { month: "Jul", income: 5400, expenses: 2700 },
-  { month: "Aug", income: 8200, expenses: 3400 },
-];
-
-const spendingCategories = [
-  { name: "Food", amount: 820, color: "#a78bfa" },
-  { name: "Transport", amount: 420, color: "#60a5fa" },
-  { name: "Shopping", amount: 1200, color: "#f472b6" },
-  { name: "Bills", amount: 650, color: "#34d399" },
-  { name: "Other", amount: 330, color: "#fbbf24" },
-];
-
 const quickActions = [
   { label: "Send Money", icon: Send, href: "/transfer", gradient: "from-violet-500 to-purple-600" },
   { label: "Transactions", icon: Receipt, href: "/transactions", gradient: "from-blue-500 to-cyan-500" },
 ];
+
+function computeMonthlyData(transactions: any[], userId: string) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const now = new Date();
+  const data: { month: string; income: number; expenses: number }[] = [];
+
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthIdx = d.getMonth();
+    const year = d.getFullYear();
+
+    const monthTx = transactions.filter((t) => {
+      const tDate = new Date(t.createdAt);
+      return tDate.getMonth() === monthIdx && tDate.getFullYear() === year;
+    });
+
+    data.push({
+      month: months[monthIdx],
+      income: monthTx
+        .filter((t) => t.receiverId === userId)
+        .reduce((sum, t) => sum + t.amount, 0),
+      expenses: monthTx
+        .filter((t) => t.senderId === userId)
+        .reduce((sum, t) => sum + t.amount, 0),
+    });
+  }
+  return data;
+}
+
+function computeSpendingBreakdown(transactions: any[], userId: string) {
+  const colors = ["#a78bfa", "#60a5fa", "#f472b6", "#34d399", "#fbbf24", "#f87171"];
+  const outflows = transactions.filter((t) => t.senderId === userId);
+
+  if (outflows.length === 0) {
+    return [
+      { name: "Transfers Sent", amount: 0, color: colors[0] },
+    ];
+  }
+
+  // Group by note (as a proxy for category), or show "Transfer" if no note
+  const categories: Record<string, number> = {};
+  outflows.forEach((t) => {
+    const cat = t.note || "Transfers";
+    categories[cat] = (categories[cat] || 0) + t.amount;
+  });
+
+  return Object.entries(categories)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([name, amount], i) => ({
+      name,
+      amount,
+      color: colors[i % colors.length],
+    }));
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -91,6 +127,8 @@ export default function DashboardPage() {
     .filter((t) => t.receiverId === user.id)
     .reduce((sum, t) => sum + t.amount, 0);
   const recentTransactions = transactions.slice(0, 5);
+  const monthlyData = computeMonthlyData(transactions, user.id);
+  const spendingCategories = computeSpendingBreakdown(transactions, user.id);
 
   return (
     <div className="space-y-6">
@@ -185,25 +223,25 @@ export default function DashboardPage() {
           },
           {
             label: "Income",
-            value: totalReceived || 8200,
+            value: totalReceived,
             icon: TrendingUp,
-            change: "+8.2%",
+            change: "",
             positive: true,
             gradient: "from-emerald-500 to-teal-500",
           },
           {
             label: "Expenses",
-            value: totalSent || 3421,
+            value: totalSent,
             icon: TrendingDown,
-            change: "-3.1%",
+            change: "",
             positive: false,
             gradient: "from-rose-500 to-pink-500",
           },
           {
             label: "Transactions",
-            value: transactions.length || 47,
+            value: transactions.length,
             icon: Receipt,
-            change: "+5",
+            change: "",
             positive: true,
             gradient: "from-amber-500 to-orange-500",
             isCount: true,
@@ -258,7 +296,7 @@ export default function DashboardPage() {
               Last 8 months
             </span>
           </div>
-          <div className="h-64">
+          <div className="h-48 sm:h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={monthlyData}>
                 <defs>
@@ -334,11 +372,13 @@ export default function DashboardPage() {
           <div className="glass card-glow rounded-2xl p-6">
             <h2 className="mb-4 text-lg font-semibold">Spending Breakdown</h2>
             <div className="space-y-3">
-              {spendingCategories.map((cat) => (
+              {spendingCategories.map((cat) => {
+                const maxAmount = Math.max(...spendingCategories.map((c) => c.amount), 1);
+                return (
                 <div key={cat.name}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span>{cat.name}</span>
-                    <span className="text-muted-foreground">
+                    <span className="truncate">{cat.name}</span>
+                    <span className="shrink-0 text-muted-foreground">
                       {formatCurrency(cat.amount)}
                     </span>
                   </div>
@@ -346,7 +386,7 @@ export default function DashboardPage() {
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{
-                        width: `${(cat.amount / 1200) * 100}%`,
+                        width: `${(cat.amount / maxAmount) * 100}%`,
                       }}
                       transition={{ duration: 1, delay: 0.5 }}
                       className="h-full rounded-full"
@@ -354,7 +394,8 @@ export default function DashboardPage() {
                     />
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </motion.div>

@@ -12,6 +12,8 @@ import {
   Settings,
   Shield,
 } from "lucide-react";
+import { fetchSession } from "@/lib/client-auth";
+import ErrorBoundary from "@/components/error-boundary";
 
 const mobileNavItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -30,24 +32,47 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("apex-user");
-    if (!user) {
-      router.replace("/login");
-      return;
-    }
-    setIsAdmin(JSON.parse(user).isAdmin === true);
+    fetchSession().then((user) => {
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+      // Sync localStorage with server-verified session
+      localStorage.setItem(
+        "apex-user",
+        JSON.stringify({
+          id: user.userId,
+          email: user.email,
+          name: user.name,
+          isAdmin: user.isAdmin,
+          balance: user.balance,
+        })
+      );
+      setIsAdmin(user.isAdmin);
+      setReady(true);
+    });
   }, [router]);
+
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main content area */}
       <div className="flex min-h-screen flex-1 flex-col lg:ml-[260px]">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-6">{children}</main>
+        <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-6">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
 
       {/* Mobile bottom nav */}
@@ -60,9 +85,7 @@ export default function DashboardLayout({
                 key={item.href}
                 onClick={() => router.push(item.href)}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />

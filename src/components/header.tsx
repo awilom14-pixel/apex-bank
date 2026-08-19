@@ -25,7 +25,16 @@ export default function Header({ onMenuClick }: HeaderProps) {
     if (hour < 12) setGreeting("Good morning");
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
-    document.documentElement.classList.add("dark");
+
+    // Restore dark mode preference
+    const savedTheme = localStorage.getItem("apex-theme");
+    if (savedTheme === "light") {
+      document.documentElement.classList.remove("dark");
+      setDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      setDark(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -67,8 +76,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
   };
 
   const toggleTheme = () => {
-    setDark(!dark);
+    const newDark = !dark;
+    setDark(newDark);
     document.documentElement.classList.toggle("dark");
+    localStorage.setItem("apex-theme", newDark ? "dark" : "light");
   };
 
   const getIcon = (type: string) => {

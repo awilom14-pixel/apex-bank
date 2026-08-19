@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const unreadOnly = searchParams.get("unreadOnly") === "true";
-
-    const where = unreadOnly ? { read: false } : {};
-
     const notifications = await prisma.notification.findMany({
-      where,
       orderBy: { createdAt: "desc" },
       take: 50,
     });
@@ -25,13 +25,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || !session.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { type, title, message, userId } = await request.json();
-
     const notification = await prisma.notification.create({
       data: { type, title, message, userId },
     });
-
     return NextResponse.json({ notification }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -39,6 +42,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { action } = await request.json();
 

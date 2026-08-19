@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem("apex-user", JSON.stringify(data.user));
+      toast.success(`Welcome, ${data.user.name}! Your account has been created.`);
       router.push("/dashboard");
     } catch {
       setError("Something went wrong");

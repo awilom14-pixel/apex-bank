@@ -1,15 +1,35 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
+import { transferSchema } from "@/lib/validate";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  try {
-    const { senderId, receiverId, amount, note } = await request.json();
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (!senderId || !receiverId || !amount) {
+  const rl = rateLimit(`transfer:${session.userId}`, 10, 60000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many transfers. Wait a minute." }, { status: 429 });
+  }
+
+  try {
+    const body = await request.json();
+    const parsed = transferSchema.safeParse(body);
+
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Sender, receiver, and amount are required" },
+        { error: parsed.error.errors[0].message },
         { status: 400 }
       );
+    }
+
+    const { senderId, receiverId, amount, note } = parsed.data;
+
+    if (senderId !== session.userId) {
+      return NextResponse.json({ error: "Unauthorized sender" }, { status: 403 });
     }
 
     if (senderId === receiverId) {
@@ -19,43 +39,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return NextResponse.json(
-        { error: "Invalid amount" },
-        { status: 400 }
-      );
-    }
-
     const sender = await prisma.user.findUnique({ where: { id: senderId } });
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 404 });
     }
 
-    if (sender.balance < numAmount) {
+    if (sender.balance < amount) {
       return NextResponse.json(
         { error: "Insufficient balance" },
         { status: 400 }
       );
     }
 
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId },
-    });
+    const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
     if (!receiver) {
-      return NextResponse.json(
-        { error: "Receiver not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Receiver not found" }, { status: 404 });
     }
 
-    // Atomic transaction: deduct sender, credit receiver, create record
     const [transaction] = await prisma.$transaction([
       prisma.transaction.create({
         data: {
           senderId,
           receiverId,
-          amount: numAmount,
+          amount,
           note: note || null,
           status: "completed",
           type: "transfer",
@@ -63,15 +69,14 @@ export async function POST(request: Request) {
       }),
       prisma.user.update({
         where: { id: senderId },
-        data: { balance: { decrement: numAmount } },
+        data: { balance: { decrement: amount } },
       }),
       prisma.user.update({
         where: { id: receiverId },
-        data: { balance: { increment: numAmount } },
+        data: { balance: { increment: amount } },
       }),
     ]);
 
-    // Fetch updated sender
     const updatedSender = await prisma.user.findUnique({
       where: { id: senderId },
       select: { id: true, name: true, email: true, balance: true, avatar: true },
@@ -80,7 +85,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       transaction,
       sender: updatedSender,
-      message: `Successfully transferred $${numAmount.toFixed(2)} to ${receiver.name}`,
+      message: `Successfully transferred $${amount.toFixed(2)} to ${receiver.name}`,
     });
   } catch (error) {
     console.error("Transfer error:", error);
@@ -92,20 +97,15 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 400 }
-      );
-    }
-
     const transactions = await prisma.transaction.findMany({
       where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
+        OR: [{ senderId: session.userId }, { receiverId: session.userId }],
       },
       include: {
         sender: { select: { id: true, name: true, email: true, avatar: true } },
