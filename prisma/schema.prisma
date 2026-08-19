@@ -8,22 +8,27 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  name           String
-  email          String   @unique
-  password       String
-  avatar         String?
-  balance        Float    @default(5000)
-  isAdmin        Boolean  @default(false)
-  mfaEnabled     Boolean  @default(false)
-  mfaSecret      String?
-  failedLogins   Int      @default(0)
-  lockedUntil    DateTime?
-  createdAt      DateTime @default(now())
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  password           String
+  avatar             String?
+  balance            Float    @default(5000)
+  isAdmin            Boolean  @default(false)
+  mfaEnabled         Boolean  @default(false)
+  mfaSecret          String?
+  failedLogins       Int      @default(0)
+  lockedUntil        DateTime?
+  stripeCustomerId   String?
+  stripeAccountId    String?
+  stripeOnboarding   Boolean  @default(false)
+  createdAt          DateTime @default(now())
   sentTransactions     Transaction[] @relation("SentTransactions")
   receivedTransactions Transaction[] @relation("ReceivedTransactions")
   auditLogs           AuditLog[]
   recurringTransfers  RecurringTransfer[]
+  deposits            Deposit[]
+  withdrawals         Withdrawal[]
 }
 
 model Transaction {
@@ -71,4 +76,27 @@ model RecurringTransfer {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   sender        User     @relation(fields: [senderId], references: [id])
+}
+
+model Deposit {
+  id               String   @id @default(cuid())
+  userId           String
+  amount           Float
+  stripeSessionId  String?  @unique
+  stripePaymentId  String?
+  status           String   @default("pending")
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+  user             User     @relation(fields: [userId], references: [id])
+}
+
+model Withdrawal {
+  id               String   @id @default(cuid())
+  userId           String
+  amount           Float
+  stripePayoutId   String?  @unique
+  status           String   @default("pending")
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+  user             User     @relation(fields: [userId], references: [id])
 }

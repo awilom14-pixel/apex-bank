@@ -13,12 +13,14 @@ import {
   CreditCard,
   Settings,
   Shield,
+  Wallet,
 } from "lucide-react";
 import { fetchSession } from "@/lib/client-auth";
 import ErrorBoundary from "@/components/error-boundary";
 
 const mobileNavItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/transfer", label: "Transfer", icon: ArrowLeftRight },
   { href: "/transactions", label: "History", icon: Receipt },
   { href: "/cards", label: "Cards", icon: CreditCard },

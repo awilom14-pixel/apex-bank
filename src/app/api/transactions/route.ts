@@ -9,18 +9,28 @@ export async function GET() {
   }
 
   try {
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        OR: [{ senderId: session.userId }, { receiverId: session.userId }],
-      },
-      include: {
-        sender: { select: { id: true, name: true, email: true, avatar: true } },
-        receiver: { select: { id: true, name: true, email: true, avatar: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const [transactions, deposits, withdrawals] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          OR: [{ senderId: session.userId }, { receiverId: session.userId }],
+        },
+        include: {
+          sender: { select: { id: true, name: true, email: true, avatar: true } },
+          receiver: { select: { id: true, name: true, email: true, avatar: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.deposit.findMany({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.withdrawal.findMany({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    return NextResponse.json({ transactions });
+    return NextResponse.json({ transactions, deposits, withdrawals });
   } catch (error) {
     console.error("Transactions error:", error);
     return NextResponse.json(

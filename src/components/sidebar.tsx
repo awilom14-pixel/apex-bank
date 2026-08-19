@@ -11,11 +11,13 @@ import {
   LogOut,
   Shield,
   X,
+  Wallet,
 } from "lucide-react";
 import { logout } from "@/lib/client-auth";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/transfer", label: "Transfer", icon: ArrowLeftRight },
   { href: "/transactions", label: "Transactions", icon: Receipt },
   { href: "/cards", label: "Cards", icon: CreditCard },

@@ -83,12 +83,42 @@ export async function GET() {
         )
       `);
 
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Deposit" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "userId" TEXT NOT NULL,
+          "amount" DOUBLE PRECISION NOT NULL,
+          "stripeSessionId" TEXT UNIQUE,
+          "stripePaymentId" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'pending',
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "completedAt" TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "User"("id")
+        )
+      `);
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "Withdrawal" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "userId" TEXT NOT NULL,
+          "amount" DOUBLE PRECISION NOT NULL,
+          "stripePayoutId" TEXT UNIQUE,
+          "status" TEXT NOT NULL DEFAULT 'pending',
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "completedAt" TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "User"("id")
+        )
+      `);
+
       // Add new columns if they don't exist
       const newColumns = [
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mfaEnabled" BOOLEAN NOT NULL DEFAULT false`,
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mfaSecret" TEXT`,
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "failedLogins" INTEGER NOT NULL DEFAULT 0`,
         `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lockedUntil" TIMESTAMP`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "stripeCustomerId" TEXT`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "stripeAccountId" TEXT`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "stripeOnboarding" BOOLEAN NOT NULL DEFAULT false`,
       ];
 
       for (const sql of newColumns) {
