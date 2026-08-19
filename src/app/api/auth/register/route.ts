@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: parsed.error.errors[0].message },
+        { error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
@@ -92,12 +92,12 @@ export async function PUT(request: Request) {
       const parsed = loginSchema.safeParse(body);
       if (!parsed.success) {
         return NextResponse.json(
-          { error: parsed.error.errors[0].message },
-          { status: 400 }
-        );
-      }
+        { error: parsed.error.issues[0].message },
+        { status: 400 }
+      );
+    }
 
-      const { email, password } = parsed.data;
+    const { email, password } = parsed.data;
 
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
