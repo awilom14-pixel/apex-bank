@@ -94,11 +94,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-lg sm:h-16 sm:px-6">
+    <header className="flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-lg sm:h-16 sm:px-6" role="banner">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
           className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:hidden"
+          aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -110,6 +111,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <button
               onClick={() => setShowPanel(!showPanel)}
               className="relative flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+              aria-expanded={showPanel}
+              aria-haspopup="true"
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -195,6 +199,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           whileTap={{ scale: 0.9 }}
           onClick={toggleTheme}
           className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          aria-label={`Switch to ${dark ? "light" : "dark"} mode`}
         >
           {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </motion.button>

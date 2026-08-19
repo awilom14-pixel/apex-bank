@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import CookieConsent from "@/components/cookie-consent";
+import Onboarding from "@/components/onboarding";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -70,13 +72,13 @@ export default function DashboardLayout({
 
       <div className="flex min-h-screen flex-1 flex-col lg:ml-[260px]">
         <Header onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-6">
+        <main id="main-content" className="flex-1 p-4 pb-20 sm:p-6 sm:pb-6" role="main">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden" role="navigation" aria-label="Main navigation">
         <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
           {mobileNavItems.map((item) => {
             const isActive = pathname === item.href;
@@ -84,6 +86,8 @@ export default function DashboardLayout({
               <button
                 key={item.href}
                 onClick={() => router.push(item.href)}
+                aria-label={item.label}
+                aria-current={isActive ? "page" : undefined}
                 className={`flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
@@ -96,6 +100,8 @@ export default function DashboardLayout({
           {isAdmin && (
             <button
               onClick={() => router.push("/admin")}
+              aria-label="Admin"
+              aria-current={pathname === "/admin" ? "page" : undefined}
               className={`flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors ${
                 pathname === "/admin" ? "text-primary" : "text-muted-foreground"
               }`}
@@ -106,6 +112,9 @@ export default function DashboardLayout({
           )}
         </div>
       </nav>
+
+      <CookieConsent />
+      <Onboarding />
     </div>
   );
 }

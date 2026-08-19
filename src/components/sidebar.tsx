@@ -54,7 +54,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gradient-start to-gradient-end">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gradient-start to-gradient-end" aria-hidden="true">
             <span className="text-lg font-bold text-white">A</span>
           </div>
           <span className="text-lg font-bold">Apex Bank</span>
@@ -62,19 +62,22 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <button
           onClick={onClose}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary lg:hidden"
+          aria-label="Close menu"
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 p-3" role="navigation" aria-label="Sidebar navigation">
         {allNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <button
               key={item.href}
               onClick={() => handleNav(item.href)}
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
               className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all ${
                 isActive
                   ? "bg-gradient-to-r from-gradient-start/10 to-gradient-end/10 text-primary"
@@ -83,6 +86,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             >
               <item.icon
                 className={`h-5 w-5 shrink-0 ${isActive ? "text-primary" : ""}`}
+                aria-hidden="true"
               />
               <span className="overflow-hidden whitespace-nowrap">
                 {item.label}

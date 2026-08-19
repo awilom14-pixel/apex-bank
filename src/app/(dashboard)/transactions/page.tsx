@@ -20,6 +20,8 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,6 +53,9 @@ export default function TransactionsPage() {
       (filter === "received" && tx.receiverId === user?.id);
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const totalSent = transactions
     .filter((t) => t.senderId === user?.id)
@@ -165,7 +170,7 @@ export default function TransactionsPage() {
             type="text"
             placeholder="Search transactions..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="h-12 w-full rounded-xl border border-border bg-secondary/50 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -173,7 +178,7 @@ export default function TransactionsPage() {
           {(["all", "sent", "received"] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => { setFilter(f); setPage(1); }}
               className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                 filter === f
                   ? "bg-gradient-to-r from-gradient-start to-gradient-end text-white"
@@ -198,13 +203,13 @@ export default function TransactionsPage() {
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
           </div>
-        ) : filtered.length === 0 ? (
+        ) : paginated.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">
             No transactions found
           </div>
         ) : (
           <div className="divide-y divide-border/50">
-            {filtered.map((tx: any) => {
+            {paginated.map((tx: any) => {
               const isSent = tx.senderId === user.id;
               const other = isSent ? tx.receiver : tx.sender;
               return (
@@ -250,6 +255,43 @@ export default function TransactionsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-border px-4 py-3 sm:px-6">
+            <p className="text-xs text-muted-foreground">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
+              >
+                Previous
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const p = i + 1;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`h-8 w-8 rounded-lg text-xs font-medium transition-colors ${
+                      p === page ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </motion.div>
