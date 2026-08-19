@@ -51,6 +51,15 @@ export async function GET() {
         )
       `);
 
+      // Add isAdmin column if it doesn't exist
+      try {
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "User" ADD COLUMN "isAdmin" BOOLEAN NOT NULL DEFAULT false
+        `);
+      } catch (e: any) {
+        // Column already exists — ignore
+      }
+
       return NextResponse.json({ success: true, message: "Database initialized via SQL" });
     } catch (sqlError: any) {
       return NextResponse.json({ error: sqlError.message }, { status: 500 });
