@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { transferSchema } from "@/lib/validate";
 import { rateLimit } from "@/lib/rate-limit";
+import { auditLog } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -81,6 +82,8 @@ export async function POST(request: Request) {
       where: { id: senderId },
       select: { id: true, name: true, email: true, balance: true, avatar: true },
     });
+
+    await auditLog(senderId, "TRANSFER", `$${amount.toFixed(2)} sent to ${receiver.name} (${receiver.email})`, request);
 
     return NextResponse.json({
       transaction,

@@ -9,6 +9,7 @@ import {
   Download,
   Filter,
   Calendar,
+  FileText,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -99,8 +100,16 @@ export default function TransactionsPage() {
           className="flex items-center gap-2 self-start rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
         >
           <Download className="h-4 w-4" />
-          Export CSV
+          CSV
         </button>
+        <a
+          href="/api/statements"
+          target="_blank"
+          className="flex items-center gap-2 self-start rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+        >
+          <FileText className="h-4 w-4" />
+          PDF
+        </a>
       </motion.div>
 
       {/* Summary */}

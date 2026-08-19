@@ -20,6 +20,10 @@ export async function GET() {
           "avatar" TEXT,
           "balance" DOUBLE PRECISION NOT NULL DEFAULT 5000,
           "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+          "mfaEnabled" BOOLEAN NOT NULL DEFAULT false,
+          "mfaSecret" TEXT,
+          "failedLogins" INTEGER NOT NULL DEFAULT 0,
+          "lockedUntil" TIMESTAMP,
           "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -51,13 +55,48 @@ export async function GET() {
         )
       `);
 
-      // Add isAdmin column if it doesn't exist
-      try {
-        await prisma.$executeRawUnsafe(`
-          ALTER TABLE "User" ADD COLUMN "isAdmin" BOOLEAN NOT NULL DEFAULT false
-        `);
-      } catch (e: any) {
-        // Column already exists — ignore
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "AuditLog" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "userId" TEXT NOT NULL,
+          "action" TEXT NOT NULL,
+          "details" TEXT,
+          "ip" TEXT,
+          "userAgent" TEXT,
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("userId") REFERENCES "User"("id")
+        )
+      `);
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "RecurringTransfer" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "senderId" TEXT NOT NULL,
+          "receiverId" TEXT NOT NULL,
+          "amount" DOUBLE PRECISION NOT NULL,
+          "note" TEXT,
+          "frequency" TEXT NOT NULL,
+          "nextExecDate" TIMESTAMP NOT NULL,
+          "active" BOOLEAN NOT NULL DEFAULT true,
+          "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("senderId") REFERENCES "User"("id")
+        )
+      `);
+
+      // Add new columns if they don't exist
+      const newColumns = [
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mfaEnabled" BOOLEAN NOT NULL DEFAULT false`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "mfaSecret" TEXT`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "failedLogins" INTEGER NOT NULL DEFAULT 0`,
+        `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lockedUntil" TIMESTAMP`,
+      ];
+
+      for (const sql of newColumns) {
+        try {
+          await prisma.$executeRawUnsafe(sql);
+        } catch (e: any) {
+          // Column already exists
+        }
       }
 
       return NextResponse.json({ success: true, message: "Database initialized via SQL" });

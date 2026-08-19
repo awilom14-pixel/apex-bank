@@ -8,16 +8,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  avatar    String?
-  balance   Float    @default(5000)
-  isAdmin   Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String
+  avatar         String?
+  balance        Float    @default(5000)
+  isAdmin        Boolean  @default(false)
+  mfaEnabled     Boolean  @default(false)
+  mfaSecret      String?
+  failedLogins   Int      @default(0)
+  lockedUntil    DateTime?
+  createdAt      DateTime @default(now())
   sentTransactions     Transaction[] @relation("SentTransactions")
   receivedTransactions Transaction[] @relation("ReceivedTransactions")
+  auditLogs           AuditLog[]
+  recurringTransfers  RecurringTransfer[]
 }
 
 model Transaction {
@@ -41,4 +47,28 @@ model Notification {
   userId    String?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model RecurringTransfer {
+  id            String   @id @default(cuid())
+  senderId      String
+  receiverId    String
+  amount        Float
+  note          String?
+  frequency     String
+  nextExecDate  DateTime
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  sender        User     @relation(fields: [senderId], references: [id])
 }

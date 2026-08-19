@@ -13,8 +13,9 @@ import {
   Shield,
   Save,
   Check,
+  Activity,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, timeAgo } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -232,17 +233,95 @@ export default function SettingsPage() {
               </p>
             </div>
           </button>
-          <button className="flex w-full items-center gap-3 rounded-xl border border-border/50 px-4 py-3 text-left transition-colors hover:bg-secondary/50">
+          <div className="flex w-full items-center gap-3 rounded-xl border border-border/50 px-4 py-3">
             <Shield className="h-5 w-5 text-muted-foreground" />
-            <div>
+            <div className="flex-1">
               <p className="text-sm font-medium">Two-Factor Authentication</p>
               <p className="text-xs text-muted-foreground">
-                Add an extra layer of security
+                {user.mfaEnabled ? "Enabled - extra security active" : "Add an extra layer of security"}
               </p>
             </div>
-          </button>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                user.mfaEnabled
+                  ? "bg-emerald-500/10 text-emerald-500"
+                  : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              {user.mfaEnabled ? "ON" : "OFF"}
+            </span>
+          </div>
         </div>
       </motion.div>
+
+      {/* Activity Log */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="glass card-glow rounded-2xl p-6"
+      >
+        <h2 className="mb-4 text-lg font-semibold">Recent Activity</h2>
+        <ActivityLog userId={user.id} />
+      </motion.div>
+    </div>
+  );
+}
+
+function ActivityLog({ userId }: { userId: string }) {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/audit")
+      .then((res) => res.json())
+      .then((data) => {
+        setLogs(data.logs || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return <p className="py-4 text-center text-sm text-muted-foreground">No activity yet</p>;
+  }
+
+  const actionIcons: Record<string, string> = {
+    LOGIN: "🔑",
+    LOGIN_FAILED: "⚠️",
+    REGISTER: "📝",
+    TRANSFER: "💸",
+    PROFILE_UPDATE: "👤",
+  };
+
+  return (
+    <div className="space-y-2">
+      {logs.slice(0, 10).map((log) => (
+        <div
+          key={log.id}
+          className="flex items-start gap-3 rounded-xl border border-border/50 px-4 py-3"
+        >
+          <span className="text-lg">{actionIcons[log.action] || "📋"}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{log.action.replace(/_/g, " ")}</p>
+            {log.details && (
+              <p className="mt-0.5 text-xs text-muted-foreground">{log.details}</p>
+            )}
+            <p className="mt-1 text-[10px] text-muted-foreground/60">
+              {timeAgo(log.createdAt)}
+              {log.ip && log.ip !== "unknown" && ` · IP: ${log.ip}`}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
