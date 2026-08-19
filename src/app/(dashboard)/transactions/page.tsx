@@ -88,7 +88,7 @@ export default function TransactionsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
           <h1 className="text-2xl font-bold">Transactions</h1>
@@ -96,7 +96,7 @@ export default function TransactionsPage() {
         </div>
         <button
           onClick={exportCSV}
-          className="flex items-center gap-2 rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+          className="flex items-center gap-2 self-start rounded-xl border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
         >
           <Download className="h-4 w-4" />
           Export CSV
@@ -148,7 +148,7 @@ export default function TransactionsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="flex flex-col gap-4 sm:flex-row"
+        className="flex flex-col gap-3 sm:flex-row"
       >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -160,12 +160,12 @@ export default function TransactionsPage() {
             className="h-12 w-full rounded-xl border border-border bg-secondary/50 pl-11 pr-4 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto">
           {(["all", "sent", "received"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
                 filter === f
                   ? "bg-gradient-to-r from-gradient-start to-gradient-end text-white"
                   : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary"
@@ -201,11 +201,11 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-secondary/30"
+                  className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-secondary/30 sm:px-6 sm:py-4"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <div
-                      className={`flex h-11 w-11 items-center justify-center rounded-full ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11 ${
                         isSent ? "bg-rose-500/10" : "bg-emerald-500/10"
                       }`}
                     >

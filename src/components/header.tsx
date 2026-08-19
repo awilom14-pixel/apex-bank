@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Sun, Moon, Bell, Check, UserPlus, ArrowRightLeft, X } from "lucide-react";
+import { Sun, Moon, Bell, Check, UserPlus, ArrowRightLeft, X, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { timeAgo } from "@/lib/utils";
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const [dark, setDark] = useState(true);
   const [greeting, setGreeting] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -79,11 +83,17 @@ export default function Header() {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-lg">
-      <div>
+    <header className="flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-lg sm:h-16 sm:px-6">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
         <p className="text-sm text-muted-foreground">{greeting}</p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {isAdmin && (
           <div ref={panelRef} className="relative">
             <button
@@ -108,7 +118,7 @@ export default function Header() {
                   initial={{ opacity: 0, y: -10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+                  className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:w-80"
                 >
                   <div className="flex items-center justify-between border-b border-border px-4 py-3">
                     <h3 className="text-sm font-semibold">Notifications</h3>

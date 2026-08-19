@@ -1,9 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Receipt,
+  CreditCard,
+  Settings,
+  Shield,
+} from "lucide-react";
+
+const mobileNavItems = [
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/transfer", label: "Transfer", icon: ArrowLeftRight },
+  { href: "/transactions", label: "History", icon: Receipt },
+  { href: "/cards", label: "Cards", icon: CreditCard },
+  { href: "/settings", label: "More", icon: Settings },
+];
 
 export default function DashboardLayout({
   children,
@@ -11,21 +27,62 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const user = localStorage.getItem("apex-user");
     if (!user) {
       router.replace("/login");
+      return;
     }
+    setIsAdmin(JSON.parse(user).isAdmin === true);
   }, [router]);
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="ml-[260px] flex flex-1 flex-col transition-all duration-300">
-        <Header />
-        <main className="flex-1 p-6">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main content area */}
+      <div className="flex min-h-screen flex-1 flex-col lg:ml-[260px]">
+        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <main className="flex-1 p-4 pb-20 sm:p-6 sm:pb-6">{children}</main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-lg lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-1">
+          {mobileNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
+                <span className="text-[10px] font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/admin")}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 transition-colors ${
+                pathname === "/admin" ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Shield className={`h-5 w-5 ${pathname === "/admin" ? "text-primary" : ""}`} />
+              <span className="text-[10px] font-medium">Admin</span>
+            </button>
+          )}
+        </div>
+      </nav>
     </div>
   );
 }

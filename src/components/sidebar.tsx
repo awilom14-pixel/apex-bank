@@ -9,10 +9,9 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
+  Shield,
+  X,
 } from "lucide-react";
-import { useState } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,77 +21,73 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
-
-  const handleLogout = () => {
-    localStorage.removeItem("apex-user");
-    router.push("/login");
-  };
 
   const user =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("apex-user") || "{}")
       : {};
 
-  return (
-    <motion.aside
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-border bg-sidebar-bg"
-    >
+  const allNavItems = user.isAdmin
+    ? [...navItems, { href: "/admin", label: "Admin", icon: Shield }]
+    : navItems;
+
+  const handleNav = (href: string) => {
+    router.push(href);
+    onClose();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("apex-user");
+    router.push("/login");
+    onClose();
+  };
+
+  const sidebarContent = (
+    <div className="flex h-full flex-col border-r border-border bg-sidebar-bg">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gradient-start to-gradient-end">
-          <span className="text-lg font-bold text-white">A</span>
+      <div className="flex h-16 items-center justify-between border-b border-border px-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gradient-start to-gradient-end">
+            <span className="text-lg font-bold text-white">A</span>
+          </div>
+          <span className="text-lg font-bold">Apex Bank</span>
         </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              className="overflow-hidden whitespace-nowrap text-lg font-bold"
-            >
-              Apex Bank
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <button
+          onClick={onClose}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary lg:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <button
               key={item.href}
-              onClick={() => router.push(item.href)}
-              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+              onClick={() => handleNav(item.href)}
+              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all ${
                 isActive
                   ? "bg-gradient-to-r from-gradient-start/10 to-gradient-end/10 text-primary"
                   : "text-muted-foreground hover:bg-sidebar-hover hover:text-foreground"
               }`}
             >
               <item.icon
-                className={`h-5 w-5 shrink-0 ${
-                  isActive ? "text-primary" : ""
-                }`}
+                className={`h-5 w-5 shrink-0 ${isActive ? "text-primary" : ""}`}
               />
-              <AnimatePresence>
-                {!collapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="overflow-hidden whitespace-nowrap"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+              <span className="overflow-hidden whitespace-nowrap">
+                {item.label}
+              </span>
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"
@@ -107,9 +102,9 @@ export default function Sidebar() {
 
       {/* User + Logout */}
       <div className="border-t border-border p-3">
-        {!collapsed && user.name && (
+        {user.name && (
           <div className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gradient-start to-gradient-end text-xs font-bold text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gradient-start to-gradient-end text-sm font-bold text-white">
               {user.name?.charAt(0)?.toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -120,37 +115,47 @@ export default function Sidebar() {
             </div>
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleLogout}
-            className="flex flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  Logout
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-sidebar-hover hover:text-foreground"
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </button>
-        </div>
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span>Logout</span>
+        </button>
       </div>
-    </motion.aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar - always visible on lg+ */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[260px] lg:block">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+              className="fixed left-0 top-0 z-50 h-screen w-[280px] lg:hidden"
+            >
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

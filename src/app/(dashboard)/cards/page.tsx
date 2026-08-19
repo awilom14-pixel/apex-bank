@@ -57,10 +57,10 @@ export default function CardsPage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="perspective-1000 flex justify-center"
+        className="perspective-1000 flex justify-center px-2"
       >
         <div
-          className={`bank-card relative h-[280px] w-[420px] max-w-full rounded-3xl bg-gradient-to-br from-gradient-start via-purple-600 to-gradient-end p-6 text-white shadow-2xl ${
+          className={`bank-card relative h-[220px] w-full max-w-[420px] rounded-3xl bg-gradient-to-br from-gradient-start via-purple-600 to-gradient-end p-5 text-white shadow-2xl sm:h-[280px] sm:p-6 ${
             frozen ? "opacity-60 grayscale" : ""
           }`}
         >
@@ -80,8 +80,8 @@ export default function CardsPage() {
           </div>
 
           {/* Card Number */}
-          <div className="relative mt-8">
-            <p className="font-mono text-2xl tracking-widest">{cardNumber}</p>
+          <div className="relative mt-6 sm:mt-8">
+            <p className="font-mono text-lg tracking-widest sm:text-2xl">{cardNumber}</p>
           </div>
 
           {/* Footer */}

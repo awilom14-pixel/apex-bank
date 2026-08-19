@@ -173,7 +173,7 @@ export default function DashboardPage() {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {[
           {
             label: "Total Balance",
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             gradient: "from-gradient-start to-gradient-end",
           },
           {
-            label: "Income This Month",
+            label: "Income",
             value: totalReceived || 8200,
             icon: TrendingUp,
             change: "+8.2%",
@@ -192,7 +192,7 @@ export default function DashboardPage() {
             gradient: "from-emerald-500 to-teal-500",
           },
           {
-            label: "Expenses This Month",
+            label: "Expenses",
             value: totalSent || 3421,
             icon: TrendingDown,
             change: "-3.1%",
@@ -200,7 +200,7 @@ export default function DashboardPage() {
             gradient: "from-rose-500 to-pink-500",
           },
           {
-            label: "Total Transactions",
+            label: "Transactions",
             value: transactions.length || 47,
             icon: Receipt,
             change: "+5",
@@ -214,7 +214,7 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="glass card-glow rounded-2xl p-5"
+            className="glass card-glow rounded-2xl p-3 sm:p-5"
           >
             <div className="flex items-start justify-between">
               <div>
