@@ -115,7 +115,7 @@ export async function GET(request: Request) {
     doc.end();
     const pdfBuffer = await completionPromise;
 
-    return new Response(pdfBuffer, {
+    return new Response(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="apex-bank-statement-${new Date().toISOString().split("T")[0]}.pdf"`,
